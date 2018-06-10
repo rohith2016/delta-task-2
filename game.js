@@ -1,50 +1,34 @@
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
 
-var screenWidth = window.innerWidth;
-var screenHeight = window.innerHeight;
 var canvasWidth = canvas.getAttribute("width");
 var canvasHeight = canvas.getAttribute("height");
 
 var framerate = 0;
-var mouseX = 50;
-var mouseY = 100;
-var oldMouseX = 100;
-var oldMouseY = 300;
-var oldHeroX = 100;
-var oldHeroY = 300;
-var animVariable = 0;
-var deepWidth = 50;
-var deepHeight = 70;
-var hitmanWidth = 65;
-var hitmanHeight = 90;
-var projectileWidth = 30;
-var projectileHeight = 30;
+var mouseX = 100;
+var mouseY = 300;
+
+var deepW = 40;
+var deepH = 70;
 var deepX = mouseX;
 var deepY = mouseY;
 
-var radius = 30;//Character's radius
-var score = 0;//score of the character
+var radius = 30;
+var score = 0;
 
 var level = 1;
 var levelText="LEVEL="+level;
-var nWalls = 6;//Number of walls to be generated initially
 var speed = 1;
-var heroVelocity = 3;
 
-var obstacleDist = 190;
-var nTwoWalls = 0;
+var obstacleDist = 200;
+var columnno = 0;
 
 var enter = false;
 var space = false;
 var spaceListen = false;
-var mouseDown = false;
-var hasTwoWalls = false;
-var wallDist = 130;
+var twoWalls = false;
+var distance = 130;
 var collision = false;
-var active = false;
-var allowed = false;
-
 var pause = false;
 var quit = false;
 var gameOver = false;
@@ -52,24 +36,20 @@ var gameOver = false;
 
 var obstacleArray = new Array();
 var twoWall = new Array();
-var levelUpdated = new Array();
+var levelno = new Array();
 
 var x;
-var x1;
 var y;
-var side;//stores north or south
-//var orient;//orientation of hitman
-var direction;
-//var n;//n order of hitman
-var n1;
-var n2;
+var side;
+
+
 var breadth = 50;//Breadth of wall obstacle 
-var length;//Length of wall obstacle
+var length;
 var twoWallLength = 500;
 var i = 0;
 var j = 0;
 var k = 0;
-var rand;
+var random;
 
 var deep = new Image();
 deep.src = "assets/deep.jpg";
@@ -79,28 +59,83 @@ deep.src = "assets/deep.jpg";
 speed = 1;
 
 
-for (i = 2; i < 6; i++) {
-	levelUpdated[i] = false;
+for (i = 2; i < 10; i++) {
+	levelno[i] = false;
 }
 
 
+function pauseGame() {
+	context.fillStyle = "black";
+	context.globalAlpha = 0.5;
+	context.fillRect(canvasWidth - canvasWidth * 0.73, canvasHeight - canvasHeight * 0.8, 500, 300);
+	context.globalAlpha = 1;
+	context.fillStyle = "red";
+	context.font = "40px Times New Roman";
+	context.fillText("GAME PAUSED", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.65);
+	context.font = "30px Times New Roman";
+	context.fillStyle = "#FFFFFF";
+	context.fillText("Press P to resume", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.52);
+	context.fillText("Press R to restart", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.40);
+}
+
+function quitGame() {
+	context.fillStyle = "black";
+	context.globalAlpha = 0.5;
+	context.fillRect(canvasWidth * 0.27, canvasHeight * 0.2, 500, 300);
+	context.globalAlpha = 1;
+	context.fillStyle = "red";
+	context.font = "40px Times New Roman";
+	context.fillText("Do you wan to Quit?", canvasWidth * 0.33,canvasHeight * 0.35);
+	context.font = "30px Times New Roman";
+	context.fillStyle = "#FFFFFF";
+	context.fillText("Press P to resume",canvasWidth * 0.38, canvasHeight * 0.48);
+	context.fillText("Press R to restart", canvasWidth * 0.38, canvasHeight * 0.60);
+}
+
+function deepDead() {
+	context.fillStyle = "black";
+	context.globalAlpha = 0.5;
+	context.fillRect(canvasWidth * 0.27, canvasHeight * 0.2, 500, 300);
+	context.globalAlpha = 1;
+	context.fillStyle = "red";
+	context.font = "50px Times New Roman";
+	context.fillText("GAME OVER", canvasWidth * 0.38, canvasHeight * 0.35);
+	context.font = "30px Times New Roman";
+	context.fillStyle = "#FFFFFF";
+	context.fillText("Score : " + score, canvasWidth * 0.42, canvasHeight * 0.48);
+	context.fillText("Press R to restart", canvasWidth * 0.37, canvasHeight * 0.60);
+}
+
+function levelUp() {
+	context.fillStyle = "black";
+	context.globalAlpha = 0.5;
+	context.fillRect(canvasWidth * 0.27, canvasHeight * 0.2, 500, 300);
+	context.globalAlpha = 1;
+	context.fillStyle = "green";
+	context.font = "40px Times New Roman";
+	context.fillText("LEVEL " + level + " COMPLETED", canvasWidth * 0.35, canvasHeight * 0.35);
+	context.font = "30px Times New Roman";
+	context.fillStyle = "#FFFFFF";
+	context.fillText("Score : " + score, canvasWidth * 0.42, canvasHeight * 0.48);
+	context.fillText("Press Space to continue", canvasWidth * 0.38, canvasHeight * 0.60);
+}
+
 document.addEventListener("keydown", function (event) {
 
-	if (event.keyCode == 13) {//enter keyCode
+	if (event.keyCode == 13) {
 		enter = true;
 	}
 
 
 
-	if (event.keyCode == 32) {//space keyCode
+	if (event.keyCode == 32) {
 		if (spaceListen == true) {
 			spaceListen = false;
 			animation();
 		}
 	}
 
-	if (event.keyCode == 82) {// R keyCode
-		//stopAudio(dead);
+	if (event.keyCode == 82) {
 		window.location.reload();
 	}
 
@@ -115,7 +150,7 @@ document.addEventListener("keydown", function (event) {
 		if ((quit == true && pause == true) && ((enter == true) && (spaceListen == false))) {
 			initialise();
 			quit = false;
-			pauseGameDraw();
+			pauseGame();
 		}
 	}
 
@@ -128,88 +163,82 @@ document.addEventListener("keydown", function (event) {
 canvas.addEventListener("mousemove", function (event) {
 	mouseX = event.pageX;
 	mouseY = event.pageY;
-	//deepX=mouseX;
+
 	deepY = mouseY - 200;
 
 }, false);
 
 
 
-function stopAudio(audio) {    //Function to stop audio the current audio from playing
-	audio.pause();
-	audio.currentTime = 0;
-}
 
+function deepHit(x, y, width, height, wallX, wallY, wallSide, wlength, wbreadth, twoWalls) {
+	
 
-
-function characterWallCollide(charX, charY, charWidth, charHeight, wallX, wallY, wallSide, wallLength, wallBreadth, hasTwoWalls, n2) {
-	//Checking for normal walls(right side)
-
-	if (((charX + charWidth >= wallX) && (charX <= wallX)) && ((charY <= wallY + wallLength) && (wallSide == "north"))) {
-		if (charY - (wallY + wallLength) != 0) {
-			charX = wallX - charWidth;
+	if (((x + width >= wallX) && (x <= wallX)) && ((y <= wallY + wlength) && (wallSide == "top"))) {
+		if (y - (wallY + wlength) != 0) {
+			x = wallX - width;
 
 		}
 	}
 
-	if (((charX + charWidth >= wallX) && (charX <= wallX)) && ((charY + charHeight >= wallY) && (wallSide == "south"))) {
-		if (charY + charHeight - wallY != 0) {
-			charX = wallX - charWidth;
+	if (((x + width >= wallX) && (x <= wallX)) && ((y + height >= wallY) && (wallSide == "down"))) {
+		if (y + height - wallY != 0) {
+			x = wallX - width;
 		}
 	}
 
-	//Checking for normal walls(left side)
-	if (((charX - (wallX + wallBreadth) < 0) && (charX > wallX)) && ((charY <= wallY + wallLength) && (wallSide == "north"))) {
-		if (charY - (wallY + wallLength) != 0) {
-			charX = wallX + wallBreadth + 2;			
+
+	if (((x - (wallX + wbreadth) < 0) && (x > wallX)) && ((y <= wallY + wlength) && (wallSide == "top"))) {
+		if (y - (wallY + wlength) != 0) {
+			x = wallX + wbreadth + 2;			
 		}
 	}
-	if (((charX - (wallX + wallBreadth) < 0) && (charX > wallX)) && ((charY + charHeight >= wallY) && (wallSide == "south"))) {
-		if (charY + charHeight - wallY != 0) {
-			charX = wallX + wallBreadth + 2;
+	if (((x - (wallX + wbreadth) < 0) && (x > wallX)) && ((y + height >= wallY) && (wallSide == "down"))) {
+		if (y + height - wallY != 0) {
+			x = wallX + wbreadth + 2;
 		}
 	}
 
-	//Checking for normal walls(top and bottom side)
-	if (((charX + charWidth >= wallX) && (charX <= wallX + wallBreadth)) && ((charY - (wallY + wallLength) == 0) && (wallSide == "north"))) {//North wall's bottom condn
-		charY = wallY + wallLength;
+	
+	if (((x + width >= wallX) && (x <= wallX + wbreadth)) && ((y - (wallY + wlength) == 0) && (wallSide == "top"))) {//North wall's bottom condn
+		y = wallY + wlength;
 	}
-	if (((charX + charWidth >= wallX) && (charX <= wallX + wallBreadth)) && ((charY + charHeight - wallY == 0) && (wallSide == "south"))) {//South wall's top condn
-		charY = wallY - charHeight;	
+	if (((x + width >= wallX) && (x <= wallX + wbreadth)) && ((y + height - wallY == 0) && (wallSide == "down"))) {//South wall's top condn
+		y = wallY - height;	
 	}
 
-	//Checking for extra wall in a Two wall system
-	if (hasTwoWalls == true) {
-		if (((charX + charWidth >= wallX) && (charX <= wallX)) && ((charY + charHeight >= wallY + wallLength + wallDist))) {
-			if (charY + charHeight - wallY != 0) {
-				charX = wallX - charWidth;				
+	
+	if (twoWalls == true) {
+		if (((x + width >= wallX) && (x <= wallX)) && ((y + height >= wallY + wlength + distance))) {
+			if (y + height - wallY != 0) {
+				x = wallX - width;				
 			}
 		}
 	}
-	if (((charX - (wallX + wallBreadth) < 0) && (charX > wallX)) && ((charY + charHeight >= wallY + wallLength + wallDist))) {
-		charX = wallX + wallBreadth + 2;
+	if (((x - (wallX + wbreadth) < 0) && (x > wallX)) && ((y + height >= wallY + wlength + distance))) {
+		x = wallX + wbreadth + 2;
 	}
 
 
-	deepX = charX;
-	deepY = charY;
+	deepX = x;
+	deepY = y;
 }
-function obstacle(x, y, breadth, length, side, hasTwoWalls) {
+function obstacle(x, y, breadth, length, side, twoWalls) {
 	this.x = x;
 	this.y = y;
 	this.breadth = breadth;
 	this.length = length;
 	this.side = side;
-	this.hasTwoWalls = hasTwoWalls;
+	this.twoWalls = twoWalls;
 
 	this.update = function () {
 		if (this.x < -breadth) {
 			this.x = canvasWidth;
-			if (this.side == "north") {
+			if (this.side == "top") {
 				this.length = 280 + Math.random() * 140;
-				if (this.hasTwoWalls == true) {
-					this.hasTwoWalls == false;
-					nTwoWalls--;
+				if (this.twoWalls == true) {
+					this.twoWalls == false;
+					columnno--;
 				}
 			}
 			else {
@@ -217,33 +246,32 @@ function obstacle(x, y, breadth, length, side, hasTwoWalls) {
 				this.y = 240 + Math.random() * 100;
 			}
 		}
-		else if (this.hasTwoWalls == true && this.side == "north") {
-			nTwoWalls++;
+		else if (this.twoWalls == true && this.side == "top") {
+			columnno++;
 			context.fillStyle = "white";
-			context.fillRect(this.x, this.y + this.length + wallDist, this.breadth, twoWallLength);
+			context.fillRect(this.x, this.y + this.length + distance, this.breadth, twoWallLength);
 		}
 	}
 
 
-	this.wallCollide = function () {//For level>0 -- Hacker mode
-		characterWallCollide(deepX, deepY, deepWidth, deepHeight, this.x, this.y, this.side, this.length, this.breadth, this.hasTwoWalls, 0);
+	this.wallCollide = function () {
+		deepHit(deepX, deepY, deepW, deepH, this.x, this.y, this.side, this.length, this.breadth, this.twoWalls);
 	}
 
 
 
 	this.wallpush = function () {
-		//Checking for normal walls(right side squeeze)
-		if (((deepX + deepWidth >= this.x) && ((deepX <= this.x) && deepX <= 0)) && ((deepY <= this.y + this.length) && (this.side == "north"))) {
+
+		if (((deepX + deepW >= this.x) && ((deepX <= this.x) && deepX <= 0)) && ((deepY <= this.y + this.length) && (this.side == "top"))) {
 			gameOver = true;
 		}
 
-		if (((deepX + deepWidth >= this.x) && ((deepX <= this.x) && deepX <= 0)) && ((deepY + deepHeight >= this.y) && (this.side == "south"))) {
+		if (((deepX + deepW >= this.x) && ((deepX <= this.x) && deepX <= 0)) && ((deepY + deepH >= this.y) && (this.side == "down"))) {
 			gameOver = true;
 		}
 
-		//Checking for extra wall in a Two wall system(right side squeeze)
-		if (this.hasTwoWalls == true) {
-			if (((deepX + deepWidth >= this.x) && ((deepX <= this.x) && deepX <= 0)) && ((deepY + deepHeight >= this.y + this.length + wallDist))) {
+		if (this.twoWalls == true) {
+			if (((deepX + deepW >= this.x) && ((deepX <= this.x) && deepX <= 0)) && ((deepY + deepH >= this.y + this.length + distance))) {
 				gameOver = true;
 			}
 		}
@@ -255,22 +283,22 @@ function obstacle(x, y, breadth, length, side, hasTwoWalls) {
 function obstaclePosition(i) {
 	x = canvasWidth - obstacleDist * i;
 	x += 250;
-	hasTwoWalls = false;
+	twoWalls = false;
 	if (i % 2 == 0) {
-		side = "north";
+		side = "top";
 		y = 0;
 		length = 240 + Math.random() * 100;
 	}
 	else {
-		side = "south";
+		side = "down";
 		y = 240 + Math.random() * 100;
 		length = 500;
 	}
-	obstacleArray.push(new obstacle(x, y, breadth, length, side, hasTwoWalls));
+	obstacleArray.push(new obstacle(x, y, breadth, length, side, twoWalls));
 }
 
 
-for (i = 0; i < nWalls; i++) {
+for (i = 0; i < 6; i++) {
 	obstaclePosition(i);
 }
 
@@ -297,17 +325,17 @@ function drawTitleCard() {
 	context.fillText("press SPACE for next level",380,450);
 	context.fillText("Press ENTER to start the game", 380, 550);
 	
-	context.fillStyle = "orange";
+	context.fillStyle = "green";
 	context.font = "bold 20px Times New Roman";
-	context.fillText("Pause : P", 1000, 50);
-	context.fillText("Quit : Q", 1000, 80);
-	context.fillText("Restart : R", 1000, 110);
+	context.fillText("Pause : P", 950, 50);
+	context.fillText("Quit : Q", 950, 80);
+	context.fillText("Restart : R", 950, 110);
 }
 
 function drawCharacter() {
 	context.clearRect(0, 0, canvasWidth, canvasHeight);
 
-	context.drawImage(deep, deepX, deepY, deepWidth, deepHeight);
+	context.drawImage(deep, deepX, deepY, deepW, deepH);
 
 }
 
@@ -319,21 +347,21 @@ function drawObstacles(x, y, breadth, length) {
 
 
 function obstaclesUpdate() {
-	if (nTwoWalls == 0) {
-		rand = Math.random();
-		if (rand <= 0.2) {
+	if (columnno == 0) {
+		random = Math.random();
+		if (random <= 0.2) {
 			k = 0;
 		}
-		else if (rand > 0.2 && rand < 0.6) {
+		else if (random > 0.2 && random < 0.6) {
 			k = 2;
 		}
 		else {
 			k = 4;
 		}
-		obstacleArray[k].hasTwoWalls = true;
+		obstacleArray[k].twoWalls = true;
 		obstacleArray[k].length = 50 + Math.random() * 100;
 	}
-	for (j = 0; j < nWalls; j++) {
+	for (j = 0; j < 6; j++) {
 		obstacleArray[j].update();	
 		obstacleArray[j].wallCollide();
 		obstacleArray[j].wallpush();	
@@ -354,45 +382,45 @@ function scoreUpdate() {
 }
 
 function scoreDraw() {
-	context.fillStyle = "white";
+	context.fillStyle = "blue";
 	context.font = "25px bold Times New Roman";
-	context.fillText("Score : " + score, canvasWidth - canvasWidth * 0.12, canvasHeight - canvasHeight * 0.05);
+	context.fillText("Score : " + score, 0.88 * canvasWidth, 0.07 * canvasHeight);
 	context.fillStyle = "#ff1744";
 }
 
 
 
 function levelDraw() {
-	context.fillStyle = "white";
+	context.fillStyle = "blue";
 	context.font = "25px bold Times New Roman";
-	context.fillText("Level : " + level, 0.9 * canvasWidth, 0.07 * canvasHeight);
+	context.fillText("Level : " + level, 0.01 * canvasWidth, 0.07 * canvasHeight);
 }
 
 function levelUpdate() {
-	if (score > 100 && levelUpdated[2] == false) {
+	if (score > 100 && levelno[2] == false) {
 		spaceListen = true;
 		level = 2;
 		speed = 2;
 	
-		levelUpdated[2] = true;
+		levelno[2] = true;
 	}
-	else if (score > 200 && levelUpdated[3] == false) {
+	else if (score > 200 && levelno[3] == false) {
 		spaceListen = true;
 		level = 3;
 		speed = 3;
-		levelUpdated[3] = true;
+		levelno[3] = true;
 	}
-	else if (score > 300 && levelUpdated[4] == false) {
+	else if (score > 300 && levelno[4] == false) {
 		spaceListen = true;
 		level = 4;
 		speed = 4;
-		levelUpdated[4] = true;
+		levelno[4] = true;
 	}
-	else if (score > 400 && levelUpdated[5] == false) {
+	else if (score > 400 && levelno[5] == false) {
 		spaceListen = true;
 		level = 5;
 		speed = 5;
-		levelUpdated[5] = true;
+		levelno[5] = true;
 	}
 	
 }
@@ -407,61 +435,7 @@ function initialise() {
 
 }
 
-function pauseGameDraw() {//Function which draws the card placed on game pause
-	context.fillStyle = "#000000";
-	context.globalAlpha = 0.6;
-	context.fillRect(canvasWidth - canvasWidth * 0.73, canvasHeight - canvasHeight * 0.8, 500, 300);
-	context.globalAlpha = 1;
-	context.fillStyle = "#FF0000";
-	context.font = "40px Times New Roman";
-	context.fillText("GAME PAUSED", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.65);
-	context.font = "30px Times New Roman";
-	context.fillStyle = "#FFFFFF";
-	context.fillText("Press P to resume", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.52);
-	context.fillText("Press R to restart", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.40);
-}
 
-function quitGameDraw() {//Function which draws the card placed on game quit
-	context.fillStyle = "#000000";
-	context.globalAlpha = 0.6;
-	context.fillRect(canvasWidth - canvasWidth * 0.73, canvasHeight - canvasHeight * 0.8, 500, 300);
-	context.globalAlpha = 1;
-	context.fillStyle = "#FF0000";
-	context.font = "40px Times New Roman";
-	context.fillText("Are you sure to Quit?", canvasWidth - canvasWidth * 0.67, canvasHeight - canvasHeight * 0.65);
-	context.font = "30px Times New Roman";
-	context.fillStyle = "#FFFFFF";
-	context.fillText("Press P to resume", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.52);
-	context.fillText("Press R to restart", canvasWidth - canvasWidth * 0.62, canvasHeight - canvasHeight * 0.40);
-}
-
-function gameOverDraw() {//end screen to draw on canvas when the game is over
-	context.fillStyle = "#000000";
-	context.globalAlpha = 0.6;
-	context.fillRect(canvasWidth - canvasWidth * 0.73, canvasHeight - canvasHeight * 0.8, 500, 300);
-	context.globalAlpha = 1;
-	context.fillStyle = "#FF0000";
-	context.font = "40px Times New Roman";
-	context.fillText("GAME OVER", canvasWidth - canvasWidth * 0.61, canvasHeight - canvasHeight * 0.65);
-	context.font = "30px Times New Roman";
-	context.fillStyle = "#FFFFFF";
-	context.fillText("Score : " + score, canvasWidth - canvasWidth * 0.58, canvasHeight - canvasHeight * 0.53);
-	context.fillText("Press R to restart", canvasWidth - canvasWidth * 0.63, canvasHeight - canvasHeight * 0.40);
-}
-
-function levelUpgradeDraw() {//end screen to draw on canvas when the game is over
-	context.fillStyle = "#000000";
-	context.globalAlpha = 0.6;
-	context.fillRect(canvasWidth - canvasWidth * 0.73, canvasHeight - canvasHeight * 0.8, 500, 300);
-	context.globalAlpha = 1;
-	context.fillStyle = "green";
-	context.font = "40px Times New Roman";
-	context.fillText("LEVEL " + level + " COMPLETED", canvasWidth - canvasWidth * 0.65, canvasHeight - canvasHeight * 0.65);
-	context.font = "30px Times New Roman";
-	context.fillStyle = "#FFFFFF";
-	context.fillText("Score : " + score, canvasWidth - canvasWidth * 0.58, canvasHeight - canvasHeight * 0.53);
-	context.fillText("Press Space to continue", canvasWidth - canvasWidth * 0.63, canvasHeight - canvasHeight * 0.40);
-}
 
 
 
@@ -472,24 +446,24 @@ function animation() {
 		initialise();
 
 		if (pause == true) {
-			pauseGameDraw();
+			pauseGame();
 			return;
 		}
 
 		if (spaceListen == true) {
-			levelUpgradeDraw();
+			levelUp();
 			return;
 		}
 
 		if (quit == true) {
 			pause = true;
-			quitGameDraw();
+			quitGame();
 			return;
 		}
-		if (gameOver == true) {//Gameover condition checking (health==0) dont forget ||
+		if (gameOver == true) {
 
 			gameOver = true;
-			gameOverDraw();
+			deepDead();
 			return;
 		}
 		
