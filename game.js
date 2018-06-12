@@ -1,20 +1,27 @@
 var canvas = document.getElementById("canvas");
 var context = canvas.getContext("2d");
+
 var canvasWidth = canvas.getAttribute("width");
 var canvasHeight = canvas.getAttribute("height");
+
 var framerate = 0;
 var mouseX = 100;
 var mouseY = 300;
+
 var deepW = 40;
 var deepH = 70;
 var deepX = mouseX;
 var deepY = mouseY;
+
 var score = 0;
+
 var level = 1;
 var levelText="LEVEL="+level;
 var speed = 1;
+
 var obstacleDist = 200;
 var columnno = 0;
+
 var enter = false;
 var space = false;
 var spaceListen = false;
@@ -24,12 +31,17 @@ var collision = false;
 var pause = false;
 var quit = false;
 var gameOver = false;
+
+
 var obstacleArray = new Array();
 var twoWall = new Array();
 var levelno = new Array();
+
 var x;
 var y;
 var side;
+
+
 var breadth = 50;//Breadth of wall obstacle 
 var length;
 var twoWallLength = 500;
@@ -37,9 +49,14 @@ var i = 0;
 var j = 0;
 var k = 0;
 var random;
+
 var deep = new Image();
 deep.src = "assets/deep.jpg";
+
+
+
 speed = 1;
+
 
 for (i = 2; i < 10; i++) {
 	levelno[i] = false;
